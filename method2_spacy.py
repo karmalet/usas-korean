@@ -12,8 +12,8 @@ from __future__ import annotations
 import spacy
 from spacy.language import Language
 
-BASE_MODEL_NAME  = r"C:\Users\ChineseDL\AppData\Roaming\Python\Python314\site-packages\xx_none_none_none_multilingualbasebem\xx_none_none_none_multilingualbasebem-0.4.0"
-SMALL_MODEL_NAME = r"C:\Users\ChineseDL\AppData\Roaming\Python\Python314\site-packages\xx_none_none_none_multilingualsmallbem"
+BASE_MODEL_NAME  = r"xx_none_none_none_multilingualbasebem"
+SMALL_MODEL_NAME = r"xx_none_none_none_multilingualsmallbem"
 
 BASE_MODEL_URL  = (
     "https://github.com/UCREL/pymusas-models/releases/download/"
