@@ -97,7 +97,7 @@ def select_method_interactive() -> int:
     print("        · 공백 기반 토큰화 | 가장 단순")
     print("        · 필요: pip install wsd-torch-models transformers torch")
     print()
-    print("  [2] 방법 2 — spaCy 파이프라인")
+    print("  [2] 방법 2 — spaCy 파이프라인 (Windows에서 사용 불가)")
     print("        · spaCy ko 토크나이저 | 배치 처리에 강함")
     print("        · 필요: pip install pymusas spacy + 모델 whl 설치")
     print()
