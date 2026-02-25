@@ -12,7 +12,7 @@ PyMUSAS Neural Multilingual Tagger (`ucrelnlp/PyMUSAS-Neural-Multilingual-Base-B
 usas_korean/
 ├── run.py                # 통합 실행 파일 (진입점)
 ├── method1_wsd_torch.py  # 방법 1: PyTorch 직접 방식
-├── method2_spacy.py      # 방법 2: spaCy 파이프라인
+├── method2_spacy.py      # 방법 2: spaCy 파이프라인 (Windows에서는 실행 불가)
 ├── method3_konlpy.py     # 방법 3: KoNLPy + PyTorch (한국어 최적화)
 ├── requirements.txt      # 의존성 목록
 ├── sample_texts.txt      # 샘플 입력 파일
