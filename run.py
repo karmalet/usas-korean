@@ -44,9 +44,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--device", "-d",
-        default="cpu",
+        default=None,
         choices=["cpu", "cuda"],
-        help="연산 장치 (방법 1, 3에서 사용). 기본값: cpu",
+        help="연산 장치 (방법 1, 3에서 사용). 기본값: 자동 감지",
     )
     parser.add_argument(
         "--small",
@@ -125,9 +125,21 @@ def load_batch_file(filepath: str) -> list[str]:
     if not path.exists():
         print(f"[오류] 파일을 찾을 수 없습니다: {filepath}")
         sys.exit(1)
-    lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines()]
-    texts = [line for line in lines if line]
-    print(f"[배치] {len(texts)}개 텍스트 로드 완료: {filepath}")
+
+    texts = []
+    if path.suffix.lower() == ".csv":
+        try:
+            with path.open("r", encoding="utf-8-sig") as f:
+                reader = csv.reader(f)
+                texts = [row[0] for row in reader if row]  # 첫 번째 열 사용
+        except Exception as e:
+            print(f"[오류] CSV 파일 읽기 실패: {e}")
+            sys.exit(1)
+    else:
+        lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines()]
+        texts = [line for line in lines if line]
+
+    print(f"[배치] {len(texts)}개 문장 로드 완료: {filepath}")
     return texts
 
 
@@ -143,12 +155,14 @@ def save_results_csv(
         writer = csv.writer(f)
 
         if method in (1, 2):
-            writer.writerow(["원문", "토큰", "태그_1위", "태그_전체"])
+            writer.writerow(["원문", "토큰", "태그_1위", "설명", "태그_전체"])
             for text, results in zip(texts, all_results):
                 for r in results:
                     top = r["tags"][0] if r["tags"] else ""
+                    defs = r.get("definitions", [])
+                    definition = defs[0] if defs else ""
                     all_tags = "|".join(r["tags"])
-                    writer.writerow([text, r["token"], top, all_tags])
+                    writer.writerow([text, r["token"], top, definition, all_tags])
 
         elif method == 3:
             writer.writerow([
@@ -182,11 +196,12 @@ def run_method1(args: argparse.Namespace) -> None:
         texts = load_batch_file(args.batch)
         model, tokenizer = load_model(args.device)
         all_results = []
+        print(f"[배치] {len(texts)}개 처리 시작...")
         for i, text in enumerate(texts):
             r = tag_text(text, model, tokenizer, top_n=args.top_n)
             all_results.append(r)
-            print(f"\n[{i+1}/{len(texts)}] {text}")
-            print_results(r)
+            if (i + 1) % 50 == 0:
+                print(f"  ... {i + 1}/{len(texts)} 완료")
         if args.output:
             save_results_csv(texts, all_results, args.output, method=1)
     else:
@@ -201,9 +216,6 @@ def run_method2(args: argparse.Namespace) -> None:
         nlp = load_pipeline(use_small=args.small)
         print(f"\n[배치] {len(texts)}개 처리 중...")
         all_results = tag_batch(texts, nlp)
-        for i, (text, results) in enumerate(zip(texts, all_results)):
-            print(f"\n[{i+1}] {text}")
-            print_results(results)
         if args.output:
             save_results_csv(texts, all_results, args.output, method=2)
     else:
@@ -225,12 +237,8 @@ def run_method3(args: argparse.Namespace) -> None:
         for i, text in enumerate(texts):
             r = tag_text(text, model, tokenizer, tagger, top_n=args.top_n)
             all_results.append(r)
-            print(f"\n[{i+1}/{len(texts)}] {text}")
-            print_results(r, show_hate_only=args.hate_only)
-            stats = analyze_hate_speech(r)
-            if stats:
-                ratio = stats["hate_token_ratio"] * 100
-                print(f"  혐오 관련 비율: {ratio:.1f}% | 플래그 토큰: {stats['flagged_tokens']}")
+            if (i + 1) % 50 == 0:
+                print(f"  ... {i + 1}/{len(texts)} 완료")
         if args.output:
             save_results_csv(texts, all_results, args.output, method=3)
     else:
@@ -249,12 +257,21 @@ def main() -> None:
         args.method = select_method_interactive()
         print()
 
+    # 디바이스 자동 설정 (지정하지 않은 경우)
+    if args.device is None:
+        try:
+            import torch
+            args.device = "cuda" if torch.cuda.is_available() else "cpu"
+        except ImportError:
+            args.device = "cpu"
+
     method_labels = {
         1: "방법 1: PyTorch 직접 방식",
         2: "방법 2: spaCy 파이프라인",
         3: "방법 3: KoNLPy + PyTorch",
     }
     print(f"▶ {method_labels[args.method]} 시작\n")
+    print(f"▷ 연산 장치: {args.device.upper()}")
 
     if args.method == 1:
         run_method1(args)

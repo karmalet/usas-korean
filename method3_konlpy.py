@@ -40,14 +40,15 @@ HATE_RELEVANT_TAGS = {
 }
 
 
-def load_model(device: str = "gpu") -> tuple:
+def load_model(device: str = "cuda") -> tuple:
     """모델과 토크나이저를 로드합니다."""
     print(f"[방법 3] 모델 로딩 중: {MODEL_NAME}")
     model = BEM.from_pretrained(MODEL_NAME)
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, add_prefix_space=True)
     model.eval()
     model.to(device)
-    print(f"[방법 3] 모델 로드 완료 (device={device})")
+    param_device = next(model.parameters()).device
+    print(f"[방법 3] 모델 로드 완료 (설정: {device}, 실제: {param_device})")
     return model, tokenizer
 
 
