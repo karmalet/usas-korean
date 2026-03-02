@@ -12,7 +12,7 @@ PyMUSAS Neural Multilingual Tagger (`ucrelnlp/PyMUSAS-Neural-Multilingual-Base-B
 usas_korean/
 ├── run.py                # 통합 실행 파일 (진입점)
 ├── method1_wsd_torch.py  # 방법 1: PyTorch 직접 방식
-├── method2_spacy.py      # 방법 2: spaCy 파이프라인 (Windows에서는 실행 불가)
+├── method2_spacy.py      # 방법 2: spaCy 파이프라인 (영어 전용)
 ├── method3_konlpy.py     # 방법 3: KoNLPy + PyTorch (한국어 최적화)
 ├── requirements.txt      # 의존성 목록
 ├── sample_texts.txt      # 샘플 입력 파일
@@ -26,21 +26,24 @@ usas_korean/
 ### 1단계 — Python 패키지
 
 ```bash
-# 기본 패키지 (방법 1, 3 공통)
-pip install wsd-torch-models transformers torch
+# 1. 기존 설치된 패키지들과 섞이지 않도록 가상 환경(.venv) 생성
+# (py -3.11 명령어가 안 되면 python 명령어로 버전을 확인하고 설치하세요)
+py -3.11 -m venv .venv
 
-# 방법 2 추가
-pip install pymusas spacy
+# 2. 가상 환경 활성화
+# (활성화되면 프롬프트 앞에 (.venv)가 표시됩니다)
+.\.venv\Scripts\Activate
 
-# 방법 2 — spaCy 모델 설치 (Base: 1GB / Small: 500MB)
-## Base 모델 (정확도 높음, 307M 파라미터)
-pip install https://github.com/UCREL/pymusas-models/releases/download/xx_none_none_none_multilingualbasebem-0.4.0/xx_none_none_none_multilingualbasebem-0.4.0-py3-none-any.whl
+# 3. pip 업그레이드
+python -m pip install --upgrade pip
 
-## Small 모델 (빠름, 140M 파라미터)
-pip install https://github.com/UCREL/pymusas-models/releases/download/xx_none_none_none_multilingualsmallbem-0.4.0/xx_none_none_none_multilingualsmallbem-0.4.0-py3-none-any.whl
+# 4. 의존 패키지 설치 (spaCy 모델 포함. Base: 1GB / Small: 500MB)
+# requirements.txt 설치
+pip install -r requirements.txt
 
-# 방법 3 추가 (Java 8 이상 필요)
-pip install konlpy
+# GPU 구동 추가 (자신의 CUDA 버전에 맞는 Pytorch 가상환경에 설치 필요)
+https://pytorch.org/get-started/locally/
+
 ```
 
 ### 2단계 — Java 설치 (방법 3 전용)

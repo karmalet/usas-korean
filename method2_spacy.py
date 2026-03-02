@@ -47,7 +47,7 @@ def load_pipeline(use_small: bool = False) -> Language:
         raise
 
     # 한국어 토크나이저
-    nlp = spacy.blank("ko")
+    nlp = spacy.blank("en")
     nlp.add_pipe("pymusas_neural_tagger", source=tagger_pipeline)
     print("[방법 2] 파이프라인 로드 완료")
     return nlp
@@ -58,13 +58,22 @@ def tag_text(text: str, nlp: Language) -> list[dict]:
     단일 텍스트를 USAS 태깅합니다.
 
     Returns:
-        [{"token": str, "tags": list[str]}, ...]
+        [{"token": str, "tags": list[str], "definitions": list[str]}, ...]
     """
     doc = nlp(text)
+
+    # 태그 설명 맵 가져오기
+    try:
+        tagger = nlp.get_pipe("pymusas_neural_tagger")
+        label_map = tagger.model.label_to_definition
+    except (KeyError, AttributeError):
+        label_map = {}
+
     results = []
     for token in doc:
         tags = list(token._.pymusas_tags) if token._.pymusas_tags else []
-        results.append({"token": token.text, "tags": tags})
+        definitions = [label_map.get(t, "") for t in tags]
+        results.append({"token": token.text, "tags": tags, "definitions": definitions})
     return results
 
 
@@ -77,12 +86,20 @@ def tag_batch(texts: list[str], nlp: Language, batch_size: int = 32) -> list[lis
         nlp: 로드된 spaCy 파이프라인
         batch_size: 배치 크기
     """
+    # 태그 설명 맵 가져오기
+    try:
+        tagger = nlp.get_pipe("pymusas_neural_tagger")
+        label_map = tagger.model.label_to_definition
+    except (KeyError, AttributeError):
+        label_map = {}
+
     all_results = []
     for i, doc in enumerate(nlp.pipe(texts, batch_size=batch_size)):
         results = []
         for token in doc:
             tags = list(token._.pymusas_tags) if token._.pymusas_tags else []
-            results.append({"token": token.text, "tags": tags})
+            definitions = [label_map.get(t, "") for t in tags]
+            results.append({"token": token.text, "tags": tags, "definitions": definitions})
         all_results.append(results)
         if (i + 1) % 10 == 0:
             print(f"  처리 완료: {i + 1}/{len(texts)}")
@@ -91,11 +108,14 @@ def tag_batch(texts: list[str], nlp: Language, batch_size: int = 32) -> list[lis
 
 def print_results(results: list[dict]) -> None:
     """결과를 보기 좋게 출력합니다."""
-    print(f"\n{'토큰':<15} {'태그 (상위 3개)'}")
-    print("-" * 50)
+    print(f"\n{'토큰':<15} {'1위 태그':<10} {'설명'}")
+    print("-" * 60)
     for r in results:
-        top3 = ", ".join(r["tags"][:3]) if r["tags"] else "N/A"
-        print(f"{r['token']:<15} {top3}")
+        top_tag = r["tags"][0] if r["tags"] else "N/A"
+        top_def = r["definitions"][0] if r["definitions"] else ""
+        all_tags = ", ".join(r["tags"])
+        print(f"{r['token']:<15} {top_tag:<10} {top_def}")
+        print(f"  └ 전체 태그: [{all_tags}]")
 
 
 def run_interactive(use_small: bool = False) -> None:
