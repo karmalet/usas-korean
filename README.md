@@ -90,7 +90,7 @@ python run.py --method 3 --batch sample_texts.txt --hate-only
 
 | | 방법 1 | 방법 2 | 방법 3 |
 |---|---|---|---|
-| **토크나이저** | 공백 분리 | spaCy ko | KoNLPy 형태소 |
+| **토크나이저** | 공백 분리 | spaCy en/ko | KoNLPy 형태소 |
 | **한국어 적합성** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 | **설치 난이도** | 쉬움 | 보통 | Java 필요 |
 | **혐오 분석 기능** | 없음 | 없음 | 있음 (통계 포함) |
